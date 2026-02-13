@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nursing Research Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+            background-color: #f7f9fb;
+            color: #1e2a38;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        /* 左右布局 */
+        .layout {
+            display: flex;
+            flex-direction: row;
+            min-height: 100vh;
+        }
+
+        /* 左侧侧边栏 */
+        .sidebar {
+            width: 420px;
+            background-color: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            padding: 20px 18px;
+            overflow-y: auto;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .sidebar h2 {
+            font-size: 1.2em;
+            color: #2b6cb0;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            font-size: 0.9em;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .search-box input:focus {
+            border-color: #2b6cb0;
+        }
+
+        .card-group details {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            padding: 10px 12px;
+        }
+
+        .card-group summary {
+            font-size: 1em;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+        .card-group ul {
+            list-style: none;
+            padding-left: 10px;
+            margin-top: 6px;
+        }
+
+        .card-group li {
+            font-size: 0.95em;
+            color: #2d3748;
+            padding: 6px 0;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s ease;
+        }
+
+        .card-group li:hover {
+            background: #edf2f7;
+            color: #1a365d;
+        }
+
+        /* 右侧聊天区 */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0 15px;
+            border-bottom: 1px solid #e2e8f0;
+            background-color: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.8em;
+            color: #1a365d;
+            font-weight: 500;
+        }
+
+        header p {
+            font-size: 0.95em;
+            color: #6c757d;
+            margin-top: 6px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 24px 16px 100px;
+            /* 留出底部输入框空间 */
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 18px;
+            width: 100%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.ai {
+            justify-content: flex-start;
+        }
+
+        .bubble {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+
+        .bubble.user {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            border-top-right-radius: 0;
+        }
+
+        .bubble.ai {
+            background: transparent;
+            border: none;
+            color: #2d3748;
+        }
+
+        /* 固定底部的输入框区域 */
+        .input-container {
+            background: #fff;
+            border-top: 1px solid #e2e8f0;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: center;
+            z-index: 20;
+        }
+
+        .input-inner {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            align-items: center;
+            /* ✅ 垂直居中对齐 textarea */
+            gap: 10px;
+            background: #f9fafb;
+            border: 1px solid #cbd5e0;
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+
+        textarea {
+            flex: 1;
+            border: none;
+            background: transparent;
+            resize: none;
+            overflow-y: auto;
+            max-height: 200px;
+            font-family: inherit;
+            font-size: 1em;
+            line-height: 1.5;
+            outline: none;
+            padding-top: 6px;
+            /* ✅ 轻微内边距，让文字更居中 */
+            padding-bottom: 6px;
+            display: flex;
+            align-items: center;
+            /* ✅ 文字垂直居中 */
+        }
+
+        button {
+            padding: 10px 16px;
+            background-color: #2b6cb0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-size: 0.95em;
+        }
+
+        button:hover {
+            background-color: #2c5282;
+        }
+
+        button:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+
+        .markdown-body h1 {
+            font-size: 1.6em;
+            margin: 20px 0 15px 0;
+            color: #1a365d;
+            font-weight: 700;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+
+        .markdown-body h2 {
+            font-size: 1.3em;
+            margin: 18px 0 12px 0;
+            color: #2d3748;
+            font-weight: 600;
+            border-left: 4px solid #2b6cb0;
+            padding-left: 12px;
+        }
+
+        .markdown-body h3 {
+            font-size: 1.1em;
+            margin: 15px 0 8px 0;
+            color: #1a365d;
+            font-weight: 600;
+        }
+
+        .markdown-body ul {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        .markdown-body li {
+            margin: 6px 0;
+            line-height: 1.6;
+        }
+
+        .markdown-body li::marker {
+            color: #2b6cb0;
+        }
+
+        .markdown-body p {
+            margin: 12px 0;
+            line-height: 1.7;
+            color: #2d3748;
+        }
+
+        .markdown-body strong {
+            color: #1a365d;
+            font-weight: 600;
+        }
+
+        .markdown-body code {
+            background-color: #f1f5f9;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #2d3748;
+        }
+
+        .markdown-body pre {
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* 添加更好的间距 */
+        .markdown-body > * + * {
+            margin-top: 12px;
+        }
+
+        /* 段落间距 */
+        .markdown-body p + p {
+            margin-top: 8px;
+        }
+
+        /* 确保链接在新标签页打开 */
+        .markdown-body a {
+            color: #2b6cb0;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-bottom-color 0.2s ease;
+        }
+
+        .markdown-body a:hover {
+            border-bottom-color: #2b6cb0;
+        }
+
+        .markdown-body a:target {
+            background-color: #fef5e7;
+        }
+
+        /* Thinking状态样式 */
+        .thinking {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background-color: #f7f9fb;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .thinking-dots {
+            display: inline-block;
+            position: relative;
+            width: 40px;
+            height: 10px;
+        }
+
+        .thinking-dots div {
+            position: absolute;
+            top: 0;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #2b6cb0;
+            animation: thinking 1.4s infinite ease-in-out both;
+        }
+
+        .thinking-dots div:nth-child(1) {
+            left: 0;
+            animation-delay: -0.32s;
+        }
+
+        .thinking-dots div:nth-child(2) {
+            left: 12px;
+            animation-delay: -0.16s;
+        }
+
+        .thinking-dots div:nth-child(3) {
+            left: 24px;
+            animation-delay: 0s;
+        }
+
+        @keyframes thinking {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        .thinking-text {
+            margin-left: 10px;
+            color: #4a5568;
+            font-size: 0.9em;
+        }
+
+        /* 移动端响应式设计 */
+        @media screen and (max-width: 768px) {
+            .layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                display: none; /* 在手机端隐藏知识卡片 */
+            }
+
+            .chat-container {
+                min-height: 100vh;
+            }
+
+            header {
+                padding: 20px 0 12px;
+            }
+
+            header h1 {
+                font-size: 1.5em;
+            }
+
+            header p {
+                font-size: 0.85em;
+            }
+
+            .chat-messages {
+                padding: 16px 12px 120px;
+            }
+
+            .bubble {
+                max-width: 90%;
+            }
+
+            .markdown-body h1 {
+                font-size: 1.4em;
+                margin: 16px 0 12px 0;
+            }
+
+            .markdown-body h2 {
+                font-size: 1.2em;
+                margin: 14px 0 10px 0;
+                padding-left: 8px;
+            }
+
+            .markdown-body h3 {
+                font-size: 1.05em;
+                margin: 12px 0 6px 0;
+            }
+
+            .markdown-body p {
+                margin: 10px 0;
+                line-height: 1.6;
+            }
+
+            .input-inner {
+                padding: 8px 10px;
+            }
+
+            textarea {
+                font-size: 0.95em;
+                padding-top: 4px;
+                padding-bottom: 4px;
+            }
+
+            button {
+                padding: 8px 14px;
+                font-size: 0.9em;
+            }
+
+            .thinking {
+                padding: 10px 12px;
+            }
+
+            .thinking-dots {
+                width: 35px;
+                height: 8px;
+            }
+
+            .thinking-dots div {
+                width: 5px;
+                height: 5px;
+            }
+
+            .thinking-dots div:nth-child(1) {
+                left: 0;
+            }
+
+            .thinking-dots div:nth-child(2) {
+                left: 10px;
+            }
+
+            .thinking-dots div:nth-child(3) {
+                left: 20px;
+            }
+        }
+
+        /* 超小屏幕优化 */
+        @media screen and (max-width: 480px) {
+            .sidebar {
+                display: none; /* 在手机端隐藏知识卡片 */
+            }
+
+            header h1 {
+                font-size: 1.3em;
+            }
+
+            .chat-messages {
+                padding: 12px 8px 110px;
+            }
+
+            .bubble {
+                max-width: 95%;
+                padding: 10px 12px;
+            }
+
+            .input-inner {
+                flex-direction: row;
+                padding: 6px 8px;
+            }
+
+            textarea {
+                font-size: 0.9em;
+            }
+
+            button {
+                padding: 6px 12px;
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <!-- 左侧动态知识卡片区域 -->
+        <aside class="sidebar" id="sidebar">
+            <h2>📚 Knowledge Cards</h2>
+            <div class="search-box">
+                <input type="text" id="cardSearch" placeholder="Search knowledge cards..." oninput="filterCards()">
+            </div>
+            <div id="cardContainer" class="card-group">
+                <p style="color:#718096;font-size:0.9em;">Loading...</p>
+            </div>
+        </aside>
+
+        <!-- 右侧聊天区 -->
+        <div class="chat-container">
+            <header>
+                <h1>Nursing Research Agent</h1>
+                <p>Your academic partner for learning nursing research.</p>
+            </header>
+
+            <div class="chat-messages" id="chatMessages"></div>
+
+            <div class="input-container">
+                <div class="input-inner">
+                    <textarea id="messageInput" rows="1" placeholder="Ask your research question here..."
+                        oninput="autoResize(this)" onkeypress="handleKeyPress(event)"></textarea>
+                    <button id="sendButton" onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js"></script>
+    <script>
+        const chatMessages = document.getElementById("chatMessages");
+        const messageInput = document.getElementById("messageInput");
+        const sendButton = document.getElementById("sendButton");
+        const cardContainer = document.getElementById("cardContainer");
+        // 配置 markdown-it，启用链接和链接自动识别
+        const md = window.markdownit({ 
+            breaks: true,
+            linkify: true,  // 自动将URL转换为链接
+            html: true,     // 允许HTML标签（如果需要）
+            typographer: true  // 启用一些排版功能
+        });
+
+        let allCardsData = []; // 存储所有卡片数据
+
+        // 🚀 动态加载知识卡片
+        async function loadCards() {
+            try {
+                const res = await fetch("/cards");
+                const data = await res.json();
+
+                if (data.error) {
+                    cardContainer.innerHTML = "<p style='color:red;'>Failed to load knowledge cards: " + data.error + "</p>";
+                    return;
+                }
+
+                allCardsData = data; // 保存所有数据
+                renderCards(data);
+            } catch (err) {
+                console.error("Failed to load knowledge cards:", err);
+                cardContainer.innerHTML = "<p style='color:red;'>Failed to load knowledge cards, please check network connection.</p>";
+            }
+        }
+
+        // 渲染卡片
+        function renderCards(data) {
+            cardContainer.innerHTML = "";
+            
+            if (data.length === 0) {
+                cardContainer.innerHTML = "<p style='color:#718096;font-size:0.9em;'>No knowledge cards data available</p>";
+                return;
+            }
+
+            data.forEach(group => {
+                const section = document.createElement("details");
+                section.open = true;
+
+                const summary = document.createElement("summary");
+                summary.textContent = "📘 " + group.label;
+                section.appendChild(summary);
+
+                const list = document.createElement("ul");
+                group.nodes.forEach(node => {
+                    const li = document.createElement("li");
+                    li.textContent = node;
+                    li.onclick = () => insertQuestion(`Please introduce ${node}.`);
+                    list.appendChild(li);
+                });
+
+                section.appendChild(list);
+                cardContainer.appendChild(section);
+            });
+        }
+
+        // 搜索过滤卡片
+        async function filterCards() {
+            const searchTerm = document.getElementById("cardSearch").value.toLowerCase();
+            
+            if (!searchTerm) {
+                renderCards(allCardsData);
+                return;
+            }
+
+            try {
+                // 在知识图谱中搜索
+                const response = await fetch(`/search?query=${encodeURIComponent(searchTerm)}`);
+                const searchResults = await response.json();
+                
+                if (searchResults.error) {
+                    console.error("Search failed:", searchResults.error);
+                    // 如果搜索失败，回退到本地过滤
+                    const filteredData = allCardsData.filter(group => {
+                        const labelMatch = group.label.toLowerCase().includes(searchTerm);
+                        const nodeMatch = group.nodes.some(node => 
+                            node.toLowerCase().includes(searchTerm)
+                        );
+                        return labelMatch || nodeMatch;
+                    });
+                    renderCards(filteredData);
+                    return;
+                }
+                
+                // 将搜索结果转换为卡片格式
+                const searchCards = {};
+                searchResults.forEach(result => {
+                    const label = result.label || "Search Results";
+                    if (!searchCards[label]) {
+                        searchCards[label] = [];
+                    }
+                    searchCards[label].push(result.name);
+                });
+                
+                // 转换为数组格式
+                const filteredData = Object.keys(searchCards).map(label => ({
+                    label: label,
+                    nodes: searchCards[label]
+                }));
+                
+                renderCards(filteredData);
+            } catch (err) {
+                console.error("Search error:", err);
+                // 搜索失败时回退到本地过滤
+                const filteredData = allCardsData.filter(group => {
+                    const labelMatch = group.label.toLowerCase().includes(searchTerm);
+                    const nodeMatch = group.nodes.some(node => 
+                        node.toLowerCase().includes(searchTerm)
+                    );
+                    return labelMatch || nodeMatch;
+                });
+                renderCards(filteredData);
+            }
+        }
+
+        // 插入问题到输入框
+        function insertQuestion(text) {
+            const input = document.getElementById("messageInput");
+            input.value = text;
+            input.focus();
+            autoResize(input);
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = "auto";
+            textarea.style.height = Math.min(textarea.scrollHeight, 200) + "px";
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, "user");
+            messageInput.value = "";
+            autoResize(messageInput);
+            sendButton.disabled = true;
+
+            // 显示thinking状态
+            showThinking();
+
+            try {
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message }),
+                });
+                const data = await response.json();
+                
+                // 隐藏thinking状态
+                hideThinking();
+                addMessage(data.response, "ai");
+            } catch (err) {
+                hideThinking();
+                addMessage("Sorry, something went wrong. Please try again later.", "ai");
+            } finally {
+                sendButton.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        // 显示thinking状态
+        function showThinking() {
+            const thinkingDiv = document.createElement("div");
+            thinkingDiv.className = "thinking";
+            thinkingDiv.id = "thinkingMessage";
+            
+            thinkingDiv.innerHTML = `
+                <div class="thinking-dots">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="thinking-text">AI is thinking...</div>
+            `;
+            
+            chatMessages.appendChild(thinkingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // 隐藏thinking状态
+        function hideThinking() {
+            const thinkingElement = document.getElementById("thinkingMessage");
+            if (thinkingElement) {
+                thinkingElement.remove();
+            }
+        }
+
+        function addMessage(content, sender) {
+            const msg = document.createElement("div");
+            msg.className = `message ${sender}`;
+            const bubble = document.createElement("div");
+            bubble.className = `bubble ${sender}`;
+            if (sender === "ai") {
+                const mdDiv = document.createElement("div");
+                mdDiv.classList.add("markdown-body");
+                
+                // 渲染 Markdown
+                mdDiv.innerHTML = md.render(content);
+                
+                // 调试：检查是否有链接
+                const links = mdDiv.querySelectorAll('a');
+                console.log(`🔗 找到 ${links.length} 个链接`);
+                
+                // 如果 markdown-it 没有解析出链接，尝试手动处理
+                if (links.length === 0) {
+                    // 检查内容中是否有 Markdown 链接格式
+                    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+                    let match;
+                    const linkMatches = [];
+                    while ((match = linkRegex.exec(content)) !== null) {
+                        linkMatches.push({ text: match[1], url: match[2] });
+                    }
+                    console.log(`📝 检测到 ${linkMatches.length} 个 Markdown 链接格式`);
+                    
+                    // 如果有链接格式但没被解析，手动转换
+                    if (linkMatches.length > 0) {
+                        let processedContent = content;
+                        linkMatches.forEach(link => {
+                            const escapedText = link.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const linkPattern = `\\[${escapedText}\\]\\(${link.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`;
+                            const linkHtml = `<a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.text}</a>`;
+                            processedContent = processedContent.replace(new RegExp(linkPattern, 'g'), linkHtml);
+                        });
+                        mdDiv.innerHTML = md.render(processedContent);
+                    }
+                }
+                
+                // 确保所有链接在新标签页打开
+                const finalLinks = mdDiv.querySelectorAll('a');
+                finalLinks.forEach(link => {
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                });
+                
+                console.log(`✅ 最终渲染了 ${finalLinks.length} 个可点击链接`);
+                
+                bubble.appendChild(mdDiv);
+            } else {
+                bubble.textContent = content;
+            }
+            msg.appendChild(bubble);
+            chatMessages.appendChild(msg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // 页面加载时自动加载卡片
+        window.onload = function() {
+            loadCards();
+        };
+    </script>
+</body>
+
+</html>
