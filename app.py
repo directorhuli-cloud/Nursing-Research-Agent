@@ -27,16 +27,16 @@ app.add_middleware(
 # 🔑 API 配置
 # ==============================
 # Coze API 配置
-COZE_API_TOKEN = os.getenv("COZE_API_TOKEN", "pat_ttDSF56BEXT63CwRDC1Y34dIxjuNlyQC1pSkXwFmYkR9Jn8W5ZhsT8gfWAYtTlDh")
+COZE_API_TOKEN = os.getenv("COZE_API_TOKEN", "pat_G0ds4eP3r6L5USmt54VA402lBSG1RrorD4Ddo3wK1Uv8RMKX3sPHxEiwjIahRVok")
 COZE_BASE_URL = "https://api.coze.com"
-COZE_WORKFLOW_ID = os.getenv("COZE_WORKFLOW_ID", "7605431104602537989")
+COZE_WORKFLOW_ID = os.getenv("COZE_WORKFLOW_ID", "7599959005917921285")
 COZE_BOT_ID = os.getenv("COZE_BOT_ID", "")
 
 # Neo4j 配置
-URI = os.getenv("NEO4J_URI", "neo4j+s://f33471c1.databases.neo4j.io")
+URI = os.getenv("NEO4J_URI", "neo4j+s://b857a56f.databases.neo4j.io")
 AUTH = (
     os.getenv("NEO4J_USERNAME", "neo4j"),
-    os.getenv("NEO4J_PASSWORD", "tAadGJGNzZoEVtfYqMaSBrGroNTpyfFh-CFRk3ue0yg")
+    os.getenv("NEO4J_PASSWORD", "bLu-cjcS06QjkLDmFCl1Dn_fdC1uiiCltXPUDgH9D90")
 )
 DATABASE_NAME = os.getenv("NEO4J_DATABASE", "neo4j")
 
