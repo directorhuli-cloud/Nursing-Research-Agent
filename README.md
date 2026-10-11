@@ -44,8 +44,10 @@ python app.py
 在部署平台或 `.env` 文件中配置：
 
 ```bash
-# Coze API 配置
-COZE_API_TOKEN=your-coze-api-token
+# Coze OAuth JWT 配置（在 www.coze.com 创建服务类 OAuth 应用）
+COZE_OAUTH_APP_ID=your-oauth-app-id
+COZE_OAUTH_KEY_ID=your-public-key-fingerprint
+COZE_OAUTH_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
 COZE_WORKFLOW_ID=your-workflow-id
 COZE_BOT_ID=your-bot-id  # 可选
 
@@ -58,7 +60,16 @@ NEO4J_DATABASE=neo4j
 
 ### 本地开发
 
-配置已包含默认值，可直接运行。生产环境建议使用环境变量。
+项目也可直接读取 `coze_oauth_python_jwt/coze_oauth_config.json`。如果此文件存在，上述三个 OAuth 环境变量可以不设置；环境变量优先于文件中的对应字段。工作流 ID 保持现有值。私钥环境变量可以填真实换行，也可以用 `\n` 表示换行。Neo4j 仍使用原有配置。
+
+### Vercel 自动获取 Coze 令牌
+
+1. 在 **www.coze.com** 的 Personal 空间进入 API Management → Authorization → OAuth Apps，创建一个新的 **Normal / Service Application**，用于本项目。只授权当前工作流所在工作区及调用 Workflow.run 所需权限。
+2. 创建密钥后保存下载的 RSA 私钥，并记下 App ID 与公钥指纹（Key ID）。不要复用其他项目的 OAuth 应用。
+3. 当前项目已放入 `coze_oauth_python_jwt/coze_oauth_config.json`。如果使用这份配置，将该目录随项目提交并部署到 Vercel 即可；如果不随代码部署，则在 Vercel **Settings → Environment Variables** 中设置 `COZE_OAUTH_APP_ID`、`COZE_OAUTH_KEY_ID` 和 `COZE_OAUTH_PRIVATE_KEY`，然后重新部署。`COZE_WORKFLOW_ID` 无需改变。无需再设置 `COZE_API_TOKEN`。
+4. 服务会在首次请求或令牌到期前约五分钟签署新的 JWT，自动换取最长 86399 秒的访问令牌。Vercel 无请求时不会运行续期任务；下一次请求会自行换取新令牌。
+
+当前 API 地址是 `api.coze.com`，所以 OAuth 应用必须建在 `www.coze.com`。如果工作流实际上属于 `www.coze.cn`，需要同时调整 API 地址、JWT audience 和 OAuth 应用所属站点。
 
 ## 📡 API 接口
 

@@ -11,6 +11,7 @@ import uvicorn
 from datetime import datetime
 import time
 import json
+from coze_auth import CozeTokenProvider
 
 app = FastAPI(title="Nursing Research Agent")
 
@@ -27,10 +28,10 @@ app.add_middleware(
 # 🔑 API 配置
 # ==============================
 # Coze API 配置
-COZE_API_TOKEN = os.getenv("COZE_API_TOKEN", "pat_G0ds4eP3r6L5USmt54VA402lBSG1RrorD4Ddo3wK1Uv8RMKX3sPHxEiwjIahRVok")
 COZE_BASE_URL = "https://api.coze.com"
 COZE_WORKFLOW_ID = os.getenv("COZE_WORKFLOW_ID", "7599959005917921285")
 COZE_BOT_ID = os.getenv("COZE_BOT_ID", "")
+coze_tokens = CozeTokenProvider()
 
 # Neo4j 配置
 URI = os.getenv("NEO4J_URI", "neo4j+s://b857a56f.databases.neo4j.io")
@@ -129,7 +130,7 @@ def call_coze_workflow(message: str) -> str:
     endpoint = f"{COZE_BASE_URL}/v1/workflow/run"
     
     headers = {
-        "Authorization": f"Bearer {COZE_API_TOKEN}",
+        "Authorization": f"Bearer {coze_tokens.get_token()}",
         "Content-Type": "application/json"
     }
     
@@ -146,6 +147,10 @@ def call_coze_workflow(message: str) -> str:
     
     try:
         response = requests.post(endpoint, json=payload, headers=headers, timeout=120)  # 增加超时时间到120秒
+        if response.status_code == 401:
+            coze_tokens.invalidate()
+            headers["Authorization"] = f"Bearer {coze_tokens.get_token()}"
+            response = requests.post(endpoint, json=payload, headers=headers, timeout=120)
         response.raise_for_status()
         
         # 检查响应内容长度
